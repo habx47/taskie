@@ -33,6 +33,12 @@ func main() {
 			fmt.Println("Shutting down...")
 			fmt.Println("Goodbye!")
 			return
+		case "help":
+			fmt.Println("help command")
+		case "add":
+			fmt.Println("add command")
+		case "delete":
+			fmt.Println("delete command")
 		default:
 			fmt.Println("Please provide a valid command")
 		}
