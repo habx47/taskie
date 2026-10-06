@@ -10,9 +10,9 @@ import (
 )
 
 type TaskStore interface {
-	Add(id int, data string)
-	Delete(id int) error
-	List(w io.Writer)
+	add(id int, data string)
+	delete(id int) error
+	list() string
 }
 
 type TaskServer struct {
@@ -83,22 +83,25 @@ func (t *TaskServer) CommandRouter(cmd []string) bool {
 }
 
 func (t *TaskServer) AddTask(data string) {
-	t.store.Add(t.id, data)
+	t.store.add(t.id, data)
 	t.id++
 }
 
-func (t *TaskServer) DeleteTask(id string) {
+func (t *TaskServer) DeleteTask(id string) bool {
 	int_id, conv_err := strconv.Atoi(id)
 	if conv_err != nil {
-		log.Printf("Operation failed: %v", conv_err)
+		log.Printf("Operation failed. Invalid id: %v", id)
+		return false
 	}
 
-	deletion_err := t.store.Delete(int_id)
+	deletion_err := t.store.delete(int_id)
 	if deletion_err != nil {
 		log.Printf("Operation failed: %v", deletion_err)
 	}
+	return false
 }
 
 func (t *TaskServer) ListTasks() {
-	t.store.List(t.w)
+	taskListStr := t.store.list()
+	fmt.Fprint(t.w, taskListStr)
 }

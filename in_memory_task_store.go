@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"io"
+	"slices"
+	"strings"
 )
 
 type InMemoryTaskStore struct {
@@ -13,11 +14,11 @@ func NewInMemoryTaskStore() *InMemoryTaskStore {
 	return &InMemoryTaskStore{store: map[int]string{}}
 }
 
-func (i *InMemoryTaskStore) Add(id int, data string) {
+func (i *InMemoryTaskStore) add(id int, data string) {
 	i.store[id] = data
 }
 
-func (i *InMemoryTaskStore) Delete(id int) error {
+func (i *InMemoryTaskStore) delete(id int) error {
 	if _, ok := i.store[id]; !ok {
 		return fmt.Errorf("Error deleting, id: %v not found", id)
 	}
@@ -26,8 +27,24 @@ func (i *InMemoryTaskStore) Delete(id int) error {
 	return nil
 }
 
-func (i *InMemoryTaskStore) List(w io.Writer) {
-	for index, value := range i.store {
-		fmt.Fprintf(w, "%v. %v\n", index, value)
+func (i *InMemoryTaskStore) list() string {
+	if len(i.store) == 0 {
+		return "No tasks found. Use \"add\" command to add tasks.\n"
 	}
+	ids_slice := make([]int, len(i.store))
+
+	idx := 0
+	for id := range i.store {
+		ids_slice[idx] = id
+		idx++
+	}
+
+	slices.Sort(ids_slice)
+	var sb strings.Builder
+
+	for _, id := range ids_slice {
+		fmt.Fprintf(&sb, "%v. %v\n", id, i.store[id])
+	}
+
+	return sb.String()
 }

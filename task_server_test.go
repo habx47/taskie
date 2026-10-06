@@ -40,10 +40,10 @@ func TestTaskServer(t *testing.T) {
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-			testTaskStore := NewInMemoryTaskStore()
+			stubTaskStore := NewInMemoryTaskStore()
 			r := strings.NewReader(tt.input)
 			var buffer bytes.Buffer
-			testTaskServer := NewTaskServer(&buffer, testTaskStore)
+			testTaskServer := NewTaskServer(&buffer, stubTaskStore)
 
 			testTaskServer.CaptureCommand(r)
 
@@ -76,7 +76,7 @@ func TestAddTask(t *testing.T) {
 	taskServer := NewTaskServer(&buffer, stubTaskStore)
 	taskServer.AddTask("testing add tasks")
 
-	stubTaskStore.List(&buffer)
+	taskServer.ListTasks()
 
 	got := (&buffer).String()
 	want := "1. testing add tasks\n"
