@@ -69,3 +69,17 @@ func TestListTasks(t *testing.T) {
 
 	assertString(t, got, want)
 }
+
+func TestAddTask(t *testing.T) {
+	var buffer bytes.Buffer
+	stubTaskStore := NewInMemoryTaskStore()
+	taskServer := NewTaskServer(&buffer, stubTaskStore)
+	taskServer.AddTask("testing add tasks")
+
+	stubTaskStore.List(&buffer)
+
+	got := (&buffer).String()
+	want := "1. testing add tasks\n"
+
+	assertString(t, got, want)
+}
