@@ -21,7 +21,12 @@ func HandleCommand(cmd []string, w io.Writer) bool {
 		fmt.Fprintln(w, "Shutting down...")
 		return false
 	case "help":
-		fmt.Fprintln(w, "help command")
+		fmt.Fprintln(w, `Available commands:
+		 - add
+		 - delete
+		 - exit
+		 - help
+		 `)
 	case "add":
 		fmt.Fprintln(w, "add command")
 	case "delete":
