@@ -40,10 +40,12 @@ func TestCaptureCommand(t *testing.T) {
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
+			testTaskStore := NewInMemoryTaskStore()
 			r := strings.NewReader(tt.input)
-			buffer := bytes.Buffer{}
+			var buffer bytes.Buffer
+			testTaskServer := NewTaskServer(&buffer, testTaskStore)
 
-			CaptureCommand(r, &buffer)
+			testTaskServer.CaptureCommand(r)
 
 			got := (&buffer).String()
 			want := tt.want
