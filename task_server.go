@@ -4,13 +4,15 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"log"
+	"strconv"
 	"strings"
 )
 
 type TaskStore interface {
 	Add(id int, data string)
-	Delete(id int)
-	List()
+	Delete(id int) error
+	List(w io.Writer)
 }
 
 type TaskServer struct {
@@ -21,6 +23,7 @@ type TaskServer struct {
 
 func NewTaskServer(w io.Writer, store TaskStore) *TaskServer {
 	t := new(TaskServer)
+	t.id = 1
 	t.w = w
 	t.store = store
 	return t
@@ -40,31 +43,39 @@ func (t *TaskServer) CaptureCommand(r io.Reader) {
 		line := scanner.Text()
 		commands_args := strings.Fields(line)
 
-		active = t.HandleCommand(commands_args)
+		active = t.CommandRouter(commands_args)
 	}
 }
 
-func (t *TaskServer) HandleCommand(cmd []string) bool {
+func (t *TaskServer) CommandRouter(cmd []string) bool {
 	if len(cmd) == 0 {
 		fmt.Fprintln(t.w, "No command provided!")
 		return true
 	}
 
 	switch cmd[0] {
+
 	case "exit":
 		fmt.Fprintln(t.w, "Goodbye!")
 		fmt.Fprintln(t.w, "Shutting down...")
 		return false
+
 	case "help":
 		fmt.Fprintln(t.w, `Available commands:
 - add
 - delete
 - exit
 - help`)
+
 	case "add":
-		fmt.Fprintln(t.w, "add command")
+		t.AddTask(cmd[1])
+
+	case "list":
+		t.ListTasks()
+
 	case "delete":
-		fmt.Fprintln(t.w, "delete command")
+		t.DeleteTask(cmd[1])
+
 	default:
 		fmt.Fprintln(t.w, "Please provide a valid command")
 	}
@@ -72,10 +83,22 @@ func (t *TaskServer) HandleCommand(cmd []string) bool {
 }
 
 func (t *TaskServer) AddTask(data string) {
+	t.store.Add(t.id, data)
+	t.id++
 }
 
-func (t *TaskServer) DeleteTask(id int) {
+func (t *TaskServer) DeleteTask(id string) {
+	int_id, conv_err := strconv.Atoi(id)
+	if conv_err != nil {
+		log.Printf("Operation failed: %v", conv_err)
+	}
+
+	deletion_err := t.store.Delete(int_id)
+	if deletion_err != nil {
+		log.Printf("Operation failed: %v", deletion_err)
+	}
 }
 
 func (t *TaskServer) ListTasks() {
+	t.store.List(t.w)
 }

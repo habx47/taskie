@@ -13,7 +13,7 @@ func assertString(t testing.TB, got, want string) {
 	}
 }
 
-func TestCaptureCommand(t *testing.T) {
+func TestTaskServer(t *testing.T) {
 
 	tests := []struct {
 		name  string
@@ -53,4 +53,19 @@ func TestCaptureCommand(t *testing.T) {
 			assertString(t, got, want)
 		})
 	}
+}
+
+func TestListTasks(t *testing.T) {
+	var buffer bytes.Buffer
+	stubTaskStore := InMemoryTaskStore{store: map[int]string{
+		1: "first task",
+		2: "second task",
+	}}
+	taskServer := NewTaskServer(&buffer, &stubTaskStore)
+	taskServer.ListTasks()
+
+	got := (&buffer).String()
+	want := "1. first task\n2. second task\n"
+
+	assertString(t, got, want)
 }
