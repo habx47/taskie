@@ -84,9 +84,16 @@ func TestAddTask(t *testing.T) {
 	assertString(t, got, want)
 }
 
-/*func TestDeleteTask(t *testing.T) {
+func TestDeleteTask(t *testing.T) {
 	var buffer bytes.Buffer
 	stubTaskStore := NewInMemoryTaskStore(map[int]string{
 		1: "first task",
 	})
-} */
+	taskServer := NewTaskServer(&buffer, stubTaskStore)
+	taskServer.DeleteTask("1")
+
+	got := buffer.String()
+	want := "Task deleted\n"
+
+	assertString(t, got, want)
+}
