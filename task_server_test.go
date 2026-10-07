@@ -40,7 +40,7 @@ func TestTaskServer(t *testing.T) {
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-			stubTaskStore := NewInMemoryTaskStore()
+			stubTaskStore := NewInMemoryTaskStore(map[int]string{})
 			r := strings.NewReader(tt.input)
 			var buffer bytes.Buffer
 			testTaskServer := NewTaskServer(&buffer, stubTaskStore)
@@ -57,11 +57,11 @@ func TestTaskServer(t *testing.T) {
 
 func TestListTasks(t *testing.T) {
 	var buffer bytes.Buffer
-	stubTaskStore := InMemoryTaskStore{store: map[int]string{
+	stubTaskStore := NewInMemoryTaskStore(map[int]string{
 		1: "first task",
 		2: "second task",
-	}}
-	taskServer := NewTaskServer(&buffer, &stubTaskStore)
+	})
+	taskServer := NewTaskServer(&buffer, stubTaskStore)
 	taskServer.ListTasks()
 
 	got := (&buffer).String()
@@ -72,7 +72,7 @@ func TestListTasks(t *testing.T) {
 
 func TestAddTask(t *testing.T) {
 	var buffer bytes.Buffer
-	stubTaskStore := NewInMemoryTaskStore()
+	stubTaskStore := NewInMemoryTaskStore(map[int]string{})
 	taskServer := NewTaskServer(&buffer, stubTaskStore)
 	taskServer.AddTask("testing add tasks")
 
@@ -83,3 +83,10 @@ func TestAddTask(t *testing.T) {
 
 	assertString(t, got, want)
 }
+
+/*func TestDeleteTask(t *testing.T) {
+	var buffer bytes.Buffer
+	stubTaskStore := NewInMemoryTaskStore(map[int]string{
+		1: "first task",
+	})
+} */

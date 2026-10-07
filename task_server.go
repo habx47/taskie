@@ -87,18 +87,17 @@ func (t *TaskServer) AddTask(data string) {
 	t.id++
 }
 
-func (t *TaskServer) DeleteTask(id string) bool {
+func (t *TaskServer) DeleteTask(id string) {
 	int_id, conv_err := strconv.Atoi(id)
 	if conv_err != nil {
 		log.Printf("Operation failed. Invalid id: %v", id)
-		return false
+		return
 	}
 
 	deletion_err := t.store.delete(int_id)
 	if deletion_err != nil {
 		log.Printf("Operation failed: %v", deletion_err)
 	}
-	return false
 }
 
 func (t *TaskServer) ListTasks() {

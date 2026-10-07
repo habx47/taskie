@@ -10,8 +10,8 @@ type InMemoryTaskStore struct {
 	store map[int]string
 }
 
-func NewInMemoryTaskStore() *InMemoryTaskStore {
-	return &InMemoryTaskStore{store: map[int]string{}}
+func NewInMemoryTaskStore(store map[int]string) *InMemoryTaskStore {
+	return &InMemoryTaskStore{store: store}
 }
 
 func (i *InMemoryTaskStore) add(id int, data string) {
