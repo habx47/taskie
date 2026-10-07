@@ -35,6 +35,11 @@ func TestTaskServer(t *testing.T) {
 			input: "exit\n",
 			want:  "Goodbye!\nShutting down...\n",
 		},
+		{
+			name:  "add",
+			input: "add first task\n",
+			want:  "Task added: \"first task\"\n",
+		},
 	}
 
 	for _, tt := range tests {

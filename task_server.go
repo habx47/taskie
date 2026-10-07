@@ -61,13 +61,16 @@ func (t *TaskServer) CommandRouter(cmd []string) bool {
 
 	case "help":
 		fmt.Fprintln(t.w, `Available commands:
-- add
-- delete
-- exit
+- add -> add [task]
+- delete -> delete [task_id]
+- list 
+- exit 
 - help`)
 
 	case "add":
-		t.AddTask(cmd[1])
+		task := strings.Join(cmd[1:], " ")
+		t.AddTask(task)
+		fmt.Fprintf(t.w, "Task added: \"%v\"\n", task)
 
 	case "list":
 		t.ListTasks()
