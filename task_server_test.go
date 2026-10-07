@@ -85,15 +85,46 @@ func TestAddTask(t *testing.T) {
 }
 
 func TestDeleteTask(t *testing.T) {
-	var buffer bytes.Buffer
-	stubTaskStore := NewInMemoryTaskStore(map[int]string{
-		1: "first task",
+
+	t.Run("delete with valid id", func(t *testing.T) {
+		var buffer bytes.Buffer
+		stubTaskStore := NewInMemoryTaskStore(map[int]string{
+			1: "first task",
+		})
+		taskServer := NewTaskServer(&buffer, stubTaskStore)
+		taskServer.DeleteTask("1")
+
+		got := buffer.String()
+		want := "Task deleted\n"
+
+		assertString(t, got, want)
 	})
-	taskServer := NewTaskServer(&buffer, stubTaskStore)
-	taskServer.DeleteTask("1")
 
-	got := buffer.String()
-	want := "Task deleted\n"
+	t.Run("delete with invalid id", func(t *testing.T) {
+		var buffer bytes.Buffer
+		stubTaskStore := NewInMemoryTaskStore(map[int]string{
+			1: "first task",
+		})
+		taskServer := NewTaskServer(&buffer, stubTaskStore)
+		taskServer.DeleteTask("invalid_id")
 
-	assertString(t, got, want)
+		got := buffer.String()
+		want := "Operation failed. Invalid id: invalid_id\n"
+
+		assertString(t, got, want)
+	})
+
+	t.Run("delete with non-existant id", func(t *testing.T) {
+		var buffer bytes.Buffer
+		stubTaskStore := NewInMemoryTaskStore(map[int]string{
+			1: "first task",
+		})
+		taskServer := NewTaskServer(&buffer, stubTaskStore)
+		taskServer.DeleteTask("2")
+
+		got := buffer.String()
+		want := "Error deleting, id: 2 not found\n"
+
+		assertString(t, got, want)
+	})
 }
