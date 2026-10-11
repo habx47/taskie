@@ -52,7 +52,7 @@ func (t *TaskServer) CommandRouter(cmd []string) bool {
 		return true
 	}
 
-	switch cmd[0] {
+	switch strings.ToLower(cmd[0]) {
 
 	case "exit":
 		fmt.Fprintln(t.w, "Goodbye!")
