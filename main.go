@@ -9,7 +9,7 @@ import (
 func main() {
 	file_store, err := NewFileStore()
 	if err != nil {
-		log.Fatalf("Could not initialize the inital data file: %v", err)
+		log.Fatalf("Could not initialize: %v", err)
 	}
 
 	taskServer := NewTaskServer(os.Stdout, file_store)

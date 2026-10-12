@@ -5,30 +5,19 @@ import (
 	"os"
 )
 
-func CreateFileStore(name string) (*os.File, error) {
-	fileName := name
+func CreateFileStore(file_store *FileStore) (bool, error) {
 
-	_, err := os.Stat(fileName)
+	_, err := os.Stat(file_store.filename)
 
 	if os.IsNotExist(err) {
-		file, createErr := os.Create(fileName)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to create a task_data file: %w", createErr)
+		file, createErr := os.Create(file_store.filename)
+		if createErr != nil {
+			return false, fmt.Errorf("Failed to create a task_data file: %w", createErr)
 		}
-		return WriteFileStore(file)
-
+		file.Close()
+		return true, file_store.saveToFile()
 	} else if err != nil {
-		return nil, fmt.Errorf("Error checking file stats: %w", err)
+		return false, fmt.Errorf("Error checking file stats: %w", err)
 	}
-	return nil, nil
-}
-
-func WriteFileStore(file *os.File) (*os.File, error) {
-	_, writeErr := file.Write([]byte("{}"))
-	file.Close()
-	if writeErr != nil {
-		return nil, fmt.Errorf("Failed to write inital json: %w", writeErr)
-	}
-
-	return file, nil
+	return false, nil
 }

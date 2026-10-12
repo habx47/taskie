@@ -9,22 +9,28 @@ import (
 	"sync"
 )
 
+type JSONPayload struct {
+	LatestID int            `json:"latest_id:"`
+	Tasks    map[int]string `json:"tasks"`
+}
+
 type FileStore struct {
-	filename string
-	store    map[int]string
-	mu       sync.RWMutex
+	filename  string
+	latest_id int
+	store     map[int]string
+	mu        sync.RWMutex
 }
 
 func NewFileStore() (*FileStore, error) {
-	file_store := &FileStore{filename: "task_data.json", store: map[int]string{}}
+	file_store := &FileStore{filename: "task_data.json", latest_id: 1, store: map[int]string{}}
 
-	file, err := CreateFileStore(file_store.filename)
+	file_created, err := CreateFileStore(file_store)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error related to task_data file: %w", err)
 	}
 
-	if file != nil {
+	if file_created == true {
 		return file_store, nil
 	}
 
@@ -33,16 +39,25 @@ func NewFileStore() (*FileStore, error) {
 		return nil, fmt.Errorf("Failed to read task_data file: %w", err)
 	}
 
-	if jsonErr := json.Unmarshal(bytes, &file_store.store); jsonErr != nil {
+	var payload JSONPayload
+	if jsonErr := json.Unmarshal(bytes, &payload); jsonErr != nil {
 		return nil, fmt.Errorf("Failed to parse existing JSON: %w", jsonErr)
 	}
+
+	file_store.latest_id = payload.LatestID
+	file_store.store = payload.Tasks
 
 	return file_store, nil
 }
 
 func (f *FileStore) saveToFile() error {
 	f.mu.RLock()
-	bytes, err := json.MarshalIndent(f.store, "", " ")
+	payload := JSONPayload{
+		LatestID: f.latest_id,
+		Tasks:    f.store,
+	}
+
+	bytes, err := json.MarshalIndent(payload, "", " ")
 	f.mu.RUnlock()
 
 	if err != nil {
@@ -58,7 +73,8 @@ func (f *FileStore) saveToFile() error {
 
 func (f *FileStore) add(data string) error {
 	f.mu.Lock()
-	f.store[len(f.store)+1] = data
+	f.store[f.latest_id] = data
+	f.latest_id++
 	f.mu.Unlock()
 
 	return f.saveToFile()
