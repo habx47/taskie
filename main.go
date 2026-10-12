@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	taskServer := NewTaskServer(os.Stdout, NewInMemoryTaskStore(map[int]string{}))
+	taskServer := NewTaskServer(os.Stdout, NewFileStore())
 	fmt.Println("Welcome to Taskie")
 	taskServer.CaptureCommand(os.Stdin)
 }
