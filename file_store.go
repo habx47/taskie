@@ -10,53 +10,25 @@ import (
 )
 
 type FileStore struct {
-	store map[int]string
-	mu    sync.RWMutex
-}
-
-func CreateFileStore(name string) (*os.File, error) {
-	fileName := name
-
-	_, err := os.Stat(fileName)
-
-	if os.IsNotExist(err) {
-		file, createErr := os.Create(fileName)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to create a task_data file: %w", createErr)
-		}
-		return WriteFileStore(file)
-
-	} else if err != nil {
-		return nil, fmt.Errorf("Error checking file stats: %w", err)
-	}
-	return nil, nil
-}
-
-func WriteFileStore(file *os.File) (*os.File, error) {
-	_, writeErr := file.Write([]byte("{}"))
-	file.Close()
-	if writeErr != nil {
-		return nil, fmt.Errorf("Failed to write inital json: %w", writeErr)
-	}
-
-	return file, nil
+	filename string
+	store    map[int]string
+	mu       sync.RWMutex
 }
 
 func NewFileStore() (*FileStore, error) {
-	dataFileName := "task_data.json"
-	file_store := &FileStore{store: map[int]string{}}
+	file_store := &FileStore{filename: "task_data.json", store: map[int]string{}}
 
-	file, err := CreateFileStore(dataFileName)
+	file, err := CreateFileStore(file_store.filename)
 
 	if err != nil {
-		return nil, fmt.Errorf("Error related to task data file: %w", err)
+		return nil, fmt.Errorf("Error related to task_data file: %w", err)
 	}
 
 	if file != nil {
 		return file_store, nil
 	}
 
-	bytes, err := os.ReadFile(dataFileName)
+	bytes, err := os.ReadFile(file_store.filename)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read task_data file: %w", err)
 	}
@@ -68,22 +40,40 @@ func NewFileStore() (*FileStore, error) {
 	return file_store, nil
 }
 
-func (f *FileStore) add(data string) {
+func (f *FileStore) saveToFile() error {
+	f.mu.RLock()
+	bytes, err := json.MarshalIndent(f.store, "", " ")
+	f.mu.RUnlock()
+
+	if err != nil {
+		return fmt.Errorf("Error converting to json: %w", err)
+	}
+
+	if err := os.WriteFile(f.filename, bytes, 0666); err != nil {
+		return fmt.Errorf("Failed to write data to task_data file :%w", err)
+	}
+
+	return nil
+}
+
+func (f *FileStore) add(data string) error {
 	f.mu.Lock()
-	defer f.mu.Unlock()
 	f.store[len(f.store)+1] = data
+	f.mu.Unlock()
+
+	return f.saveToFile()
 }
 
 func (f *FileStore) delete(id int) error {
+	f.mu.Lock()
 	if _, ok := f.store[id]; !ok {
 		return fmt.Errorf("Error deleting, id: %v not found", id)
 	}
 
-	f.mu.Lock()
-	defer f.mu.Unlock()
-
 	delete(f.store, id)
-	return nil
+	f.mu.Unlock()
+
+	return f.saveToFile()
 }
 
 func (f *FileStore) list() string {

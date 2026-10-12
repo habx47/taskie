@@ -15,9 +15,10 @@ func NewInMemoryTaskStore(store map[int]string) *InMemoryTaskStore {
 	return &InMemoryTaskStore{id: 1, store: store}
 }
 
-func (i *InMemoryTaskStore) add(data string) {
+func (i *InMemoryTaskStore) add(data string) error {
 	i.store[i.id] = data
 	i.id++
+	return nil
 }
 
 func (i *InMemoryTaskStore) delete(id int) error {

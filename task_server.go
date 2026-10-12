@@ -9,7 +9,7 @@ import (
 )
 
 type TaskStore interface {
-	add(data string)
+	add(data string) error
 	delete(id int) error
 	list() string
 }
@@ -83,7 +83,10 @@ func (t *TaskServer) CommandRouter(cmd []string) bool {
 }
 
 func (t *TaskServer) AddTask(data string) {
-	t.store.add(data)
+	err := t.store.add(data)
+	if err != nil {
+		fmt.Fprintf(t.w, "Operation failed.%v\n", err)
+	}
 }
 
 func (t *TaskServer) DeleteTask(id string) {
