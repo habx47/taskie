@@ -14,31 +14,49 @@ type FileStore struct {
 	mu    sync.RWMutex
 }
 
-func NewFileStore() (*FileStore, error) {
-	filePath := "task_data.json"
-	file_store := &FileStore{store: map[int]string{}}
+func CreateFileStore(name string) (*os.File, error) {
+	fileName := name
 
-	_, err := os.Stat(filePath)
+	_, err := os.Stat(fileName)
 
 	if os.IsNotExist(err) {
-		file, createErr := os.Create(filePath)
-		if createErr != nil {
+		file, createErr := os.Create(fileName)
+		if err != nil {
 			return nil, fmt.Errorf("Failed to create a task_data file: %w", createErr)
 		}
-
-		_, writeErr := file.Write([]byte("{}"))
-		file.Close()
-		if writeErr != nil {
-			return nil, fmt.Errorf("Failed to write inital json: %w", writeErr)
-		}
-
-		return file_store, nil
+		return WriteFileStore(file)
 
 	} else if err != nil {
 		return nil, fmt.Errorf("Error checking file stats: %w", err)
 	}
+	return nil, nil
+}
 
-	bytes, err := os.ReadFile(filePath)
+func WriteFileStore(file *os.File) (*os.File, error) {
+	_, writeErr := file.Write([]byte("{}"))
+	file.Close()
+	if writeErr != nil {
+		return nil, fmt.Errorf("Failed to write inital json: %w", writeErr)
+	}
+
+	return file, nil
+}
+
+func NewFileStore() (*FileStore, error) {
+	dataFileName := "task_data.json"
+	file_store := &FileStore{store: map[int]string{}}
+
+	file, err := CreateFileStore(dataFileName)
+
+	if err != nil {
+		return nil, fmt.Errorf("Error related to task data file: %w", err)
+	}
+
+	if file != nil {
+		return file_store, nil
+	}
+
+	bytes, err := os.ReadFile(dataFileName)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read task_data file: %w", err)
 	}
