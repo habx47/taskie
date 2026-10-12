@@ -56,9 +56,9 @@ func (f *FileStore) saveToFile() error {
 		LatestID: f.latest_id,
 		Tasks:    f.store,
 	}
+	f.mu.RUnlock()
 
 	bytes, err := json.MarshalIndent(payload, "", " ")
-	f.mu.RUnlock()
 
 	if err != nil {
 		return fmt.Errorf("Error converting to json: %w", err)
@@ -83,6 +83,7 @@ func (f *FileStore) add(data string) error {
 func (f *FileStore) delete(id int) error {
 	f.mu.Lock()
 	if _, ok := f.store[id]; !ok {
+		f.mu.Unlock()
 		return fmt.Errorf("Error deleting, id: %v not found", id)
 	}
 
