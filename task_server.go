@@ -9,20 +9,18 @@ import (
 )
 
 type TaskStore interface {
-	add(id int, data string)
+	add(data string)
 	delete(id int) error
 	list() string
 }
 
 type TaskServer struct {
-	id    int
 	w     io.Writer
 	store TaskStore
 }
 
 func NewTaskServer(w io.Writer, store TaskStore) *TaskServer {
 	t := new(TaskServer)
-	t.id = 1
 	t.w = w
 	t.store = store
 	return t
@@ -85,8 +83,7 @@ func (t *TaskServer) CommandRouter(cmd []string) bool {
 }
 
 func (t *TaskServer) AddTask(data string) {
-	t.store.add(t.id, data)
-	t.id++
+	t.store.add(data)
 }
 
 func (t *TaskServer) DeleteTask(id string) {

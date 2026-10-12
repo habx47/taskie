@@ -7,15 +7,17 @@ import (
 )
 
 type InMemoryTaskStore struct {
+	id    int
 	store map[int]string
 }
 
 func NewInMemoryTaskStore(store map[int]string) *InMemoryTaskStore {
-	return &InMemoryTaskStore{store: store}
+	return &InMemoryTaskStore{id: 1, store: store}
 }
 
-func (i *InMemoryTaskStore) add(id int, data string) {
-	i.store[id] = data
+func (i *InMemoryTaskStore) add(data string) {
+	i.store[i.id] = data
+	i.id++
 }
 
 func (i *InMemoryTaskStore) delete(id int) error {
