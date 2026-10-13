@@ -10,7 +10,7 @@ import (
 )
 
 type JSONPayload struct {
-	LatestID int            `json:"latest_id:"`
+	LatestID int            `json:"latest_id"`
 	Tasks    map[int]string `json:"tasks"`
 }
 
@@ -94,6 +94,9 @@ func (f *FileStore) delete(id int) error {
 }
 
 func (f *FileStore) list() string {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+
 	if len(f.store) == 0 {
 		return "No tasks found. Use \"add\" command to add tasks.\n"
 	}

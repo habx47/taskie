@@ -74,6 +74,11 @@ func (t *TaskServer) CommandRouter(cmd []string) bool {
 		t.ListTasks()
 
 	case "delete":
+		if len(cmd) == 1 {
+			fmt.Fprint(t.w, "Need a valid task-id to delete\n")
+			return true
+		}
+
 		t.DeleteTask(cmd[1])
 
 	default:
