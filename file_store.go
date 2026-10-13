@@ -2,12 +2,16 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"slices"
 	"strings"
 	"sync"
 )
+
+var LoadingFile_ReadErr = errors.New("Couldn't read the json data file")
+var LoadingFile_JSONErr = errors.New("Couldn't unmarhsall the json file")
 
 type JSONPayload struct {
 	LatestID int            `json:"latest_id"`
@@ -27,27 +31,35 @@ func NewFileStore() (*FileStore, error) {
 	file_created, err := CreateFileStore(file_store)
 
 	if err != nil {
-		return nil, fmt.Errorf("Error related to task_data file: %w", err)
+		return nil, fmt.Errorf("Error related to creating task_data file: %w", err)
 	}
 
 	if file_created == true {
 		return file_store, nil
 	}
 
+	loadErr := LoadFileStore(file_store)
+	if loadErr != nil {
+		return nil, fmt.Errorf("Error realted to loading task_data file: %w", loadErr)
+	}
+
+	return file_store, nil
+}
+
+func LoadFileStore(file_store *FileStore) error {
 	bytes, err := os.ReadFile(file_store.filename)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to read task_data file: %w", err)
+		return fmt.Errorf("Failure: %w, err: %v", LoadingFile_ReadErr, err)
 	}
 
 	var payload JSONPayload
 	if jsonErr := json.Unmarshal(bytes, &payload); jsonErr != nil {
-		return nil, fmt.Errorf("Failed to parse existing JSON: %w", jsonErr)
+		return fmt.Errorf("Failure: %w, err: %v", LoadingFile_JSONErr, jsonErr)
 	}
 
 	file_store.latest_id = payload.LatestID
 	file_store.store = payload.Tasks
-
-	return file_store, nil
+	return nil
 }
 
 func (f *FileStore) saveToFile() error {
@@ -61,11 +73,11 @@ func (f *FileStore) saveToFile() error {
 	bytes, err := json.MarshalIndent(payload, "", " ")
 
 	if err != nil {
-		return fmt.Errorf("Error converting to json: %w", err)
+		return fmt.Errorf("Error converting to json for saving: %w", err)
 	}
 
 	if err := os.WriteFile(f.filename, bytes, 0666); err != nil {
-		return fmt.Errorf("Failed to write data to task_data file :%w", err)
+		return fmt.Errorf("Failed to write json data to task_data file :%w", err)
 	}
 
 	return nil
@@ -77,7 +89,15 @@ func (f *FileStore) add(data string) error {
 	f.latest_id++
 	f.mu.Unlock()
 
-	return f.saveToFile()
+	err := f.saveToFile()
+	if err != nil {
+		loadErr := LoadFileStore(f)
+		if loadErr != nil {
+			return fmt.Errorf("Loading file again on failure to add new task failed: %w", loadErr)
+		}
+	}
+
+	return nil
 }
 
 func (f *FileStore) delete(id int) error {
@@ -90,7 +110,15 @@ func (f *FileStore) delete(id int) error {
 	delete(f.store, id)
 	f.mu.Unlock()
 
-	return f.saveToFile()
+	err := f.saveToFile()
+	if err != nil {
+		loadErr := LoadFileStore(f)
+		if loadErr != nil {
+			return fmt.Errorf("Loading file again on failure to add new task failed: %w", loadErr)
+		}
+	}
+
+	return nil
 }
 
 func (f *FileStore) list() string {

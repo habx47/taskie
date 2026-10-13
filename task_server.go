@@ -2,8 +2,10 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
+	"log"
 	"strconv"
 	"strings"
 )
@@ -90,7 +92,7 @@ func (t *TaskServer) CommandRouter(cmd []string) bool {
 func (t *TaskServer) AddTask(data string) {
 	err := t.store.add(data)
 	if err != nil {
-		fmt.Fprintf(t.w, "Operation failed.%v\n", err)
+		log.Fatalf("Operation failed. %v\n", err)
 	}
 }
 
@@ -102,12 +104,17 @@ func (t *TaskServer) DeleteTask(id string) {
 	}
 
 	deletion_err := t.store.delete(int_id)
-	if deletion_err != nil {
-		fmt.Fprintf(t.w, "%v\n", deletion_err)
+
+	if deletion_err == nil {
+		fmt.Fprint(t.w, "Task deleted\n")
 		return
 	}
 
-	fmt.Fprint(t.w, "Task deleted\n")
+	if errors.Is(deletion_err, LoadingFile_ReadErr) || errors.Is(deletion_err, LoadingFile_JSONErr) {
+		log.Fatalf("Operation failed. %v\n", deletion_err)
+	}
+
+	fmt.Fprintf(t.w, "%v\n", deletion_err)
 }
 
 func (t *TaskServer) ListTasks() {
