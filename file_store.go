@@ -1,22 +1,11 @@
 package main
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
-	"os"
 	"slices"
 	"strings"
 	"sync"
 )
-
-var LoadingFile_ReadErr = errors.New("Couldn't read the json data file")
-var LoadingFile_JSONErr = errors.New("Couldn't unmarhsall the json file")
-
-type JSONPayload struct {
-	LatestID int            `json:"latest_id"`
-	Tasks    map[int]string `json:"tasks"`
-}
 
 type FileStore struct {
 	filename  string
@@ -46,50 +35,13 @@ func NewFileStore() (*FileStore, error) {
 	return file_store, nil
 }
 
-func LoadFileStore(file_store *FileStore) error {
-	bytes, err := os.ReadFile(file_store.filename)
-	if err != nil {
-		return fmt.Errorf("Failure: %w, err: %v", LoadingFile_ReadErr, err)
-	}
-
-	var payload JSONPayload
-	if jsonErr := json.Unmarshal(bytes, &payload); jsonErr != nil {
-		return fmt.Errorf("Failure: %w, err: %v", LoadingFile_JSONErr, jsonErr)
-	}
-
-	file_store.latest_id = payload.LatestID
-	file_store.store = payload.Tasks
-	return nil
-}
-
-func (f *FileStore) saveToFile() error {
-	f.mu.RLock()
-	payload := JSONPayload{
-		LatestID: f.latest_id,
-		Tasks:    f.store,
-	}
-	f.mu.RUnlock()
-
-	bytes, err := json.MarshalIndent(payload, "", " ")
-
-	if err != nil {
-		return fmt.Errorf("Error converting to json for saving: %w", err)
-	}
-
-	if err := os.WriteFile(f.filename, bytes, 0666); err != nil {
-		return fmt.Errorf("Failed to write json data to task_data file :%w", err)
-	}
-
-	return nil
-}
-
 func (f *FileStore) add(data string) error {
 	f.mu.Lock()
 	f.store[f.latest_id] = data
 	f.latest_id++
 	f.mu.Unlock()
 
-	err := f.saveToFile()
+	err := SaveToFile(f)
 	if err != nil {
 		loadErr := LoadFileStore(f)
 		if loadErr != nil {
@@ -110,7 +62,7 @@ func (f *FileStore) delete(id int) error {
 	delete(f.store, id)
 	f.mu.Unlock()
 
-	err := f.saveToFile()
+	err := SaveToFile(f)
 	if err != nil {
 		loadErr := LoadFileStore(f)
 		if loadErr != nil {
