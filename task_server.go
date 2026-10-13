@@ -70,7 +70,6 @@ func (t *TaskServer) CommandRouter(cmd []string) bool {
 	case "add":
 		task := strings.Join(cmd[1:], " ")
 		t.AddTask(task)
-		fmt.Fprintf(t.w, "Task added: \"%v\"\n", task)
 
 	case "list":
 		t.ListTasks()
@@ -91,9 +90,16 @@ func (t *TaskServer) CommandRouter(cmd []string) bool {
 
 func (t *TaskServer) AddTask(data string) {
 	err := t.store.add(data)
-	if err != nil {
+	if err == nil {
+		fmt.Fprintf(t.w, "Task added: \"%v\"\n", data)
+		return
+	}
+
+	if errors.Is(err, LoadingFile_ReadErr) || errors.Is(err, LoadingFile_JSONErr) {
 		log.Fatalf("Operation failed. %v\n", err)
 	}
+
+	fmt.Fprintf(t.w, "%v\n", err)
 }
 
 func (t *TaskServer) DeleteTask(id string) {

@@ -97,7 +97,7 @@ func (f *FileStore) add(data string) error {
 		}
 	}
 
-	return nil
+	return err
 }
 
 func (f *FileStore) delete(id int) error {
@@ -118,7 +118,7 @@ func (f *FileStore) delete(id int) error {
 		}
 	}
 
-	return nil
+	return err
 }
 
 func (f *FileStore) list() string {
