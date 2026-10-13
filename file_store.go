@@ -20,14 +20,14 @@ func NewFileStore() (*FileStore, error) {
 	file_store := &FileStore{filename: "task_data.json", latest_id: 1, store: map[int]string{}}
 	dataFilePath, err := getDataFileName(file_store.filename)
 	if err != nil {
-		return nil, fmt.Errorf("%w: error resolving project path: %q", FatalErr, err)
+		return nil, fmt.Errorf("Error resolving project path: %w", err)
 	}
 	file_store.filepath = dataFilePath
 
 	file_created, err := CreateFileStore(file_store)
 
 	if err != nil {
-		return nil, fmt.Errorf("%w: error related to creating task data file: %q", FatalErr, err)
+		return nil, fmt.Errorf("Error related to creating task data file: %w", err)
 	}
 
 	if file_created == true {
@@ -36,10 +36,10 @@ func NewFileStore() (*FileStore, error) {
 
 	loadErr := LoadFileStore(file_store)
 	if errors.Is(loadErr, FatalErr) {
-		return nil, fmt.Errorf("%w: error realted to loading task data file: %q", FatalErr, loadErr)
+		return nil, fmt.Errorf("Error realted to loading task data file: %w", loadErr)
 	}
 
-	return file_store, loadErr
+	return file_store, nil
 }
 
 func (f *FileStore) add(data string) error {
@@ -52,7 +52,7 @@ func (f *FileStore) add(data string) error {
 	if err != nil {
 		loadErr := LoadFileStore(f)
 		if loadErr != nil {
-			return fmt.Errorf("%w: failed to write task to file and load it: %v", FatalErr, loadErr)
+			return fmt.Errorf("Failed to write task to file and load it: %w", loadErr)
 		}
 	}
 
@@ -73,7 +73,7 @@ func (f *FileStore) delete(id int) error {
 	if err != nil {
 		loadErr := LoadFileStore(f)
 		if loadErr != nil {
-			return fmt.Errorf("%w: failed to delete the task from file and load it: %v", FatalErr, loadErr)
+			return fmt.Errorf("Failed to delete the task from file and load it: %w", loadErr)
 		}
 	}
 

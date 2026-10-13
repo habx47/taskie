@@ -48,7 +48,7 @@ func LoadFileStore(file_store *FileStore) error {
 	}
 
 	if !json.Valid(bytes) {
-		return fmt.Errorf("Data file corrupted")
+		return fmt.Errorf("%w: Data file corrupted. Manually try to correct it.", FatalErr)
 	}
 
 	var payload JSONPayload
