@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 var LoadingFile_ReadErr = errors.New("Couldn't read the json data file")
@@ -15,18 +16,28 @@ type JSONPayload struct {
 	Tasks    map[int]string `json:"tasks"`
 }
 
-func CreateFileStore(file_store *FileStore) (bool, error) {
-	_, err := os.Stat(file_store.filename)
+func getDataFileName(name string) (string, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
 
-	if os.IsNotExist(err) {
-		file, createErr := os.Create(file_store.filename)
-		if createErr != nil {
-			return false, fmt.Errorf("Failed to create a task_data file: %w", createErr)
-		}
-		file.Close()
+	projectDir := filepath.Join(homeDir, "projects", "taskie")
+
+	if err := os.MkdirAll(projectDir, 0755); err != nil {
+		return "", err
+	}
+
+	return filepath.Join(projectDir, name), nil
+}
+
+func CreateFileStore(file_store *FileStore) (bool, error) {
+	_, statErr := os.Stat(file_store.filepath)
+
+	if os.IsNotExist(statErr) {
 		return true, SaveToFile(file_store)
-	} else if err != nil {
-		return false, fmt.Errorf("Error checking file stats: %w", err)
+	} else if statErr != nil {
+		return false, fmt.Errorf("Error checking file stats: %w", statErr)
 	}
 	return false, nil
 }
@@ -53,17 +64,32 @@ func SaveToFile(file_store *FileStore) error {
 		LatestID: file_store.latest_id,
 		Tasks:    file_store.store,
 	}
-	file_store.mu.RUnlock()
 
 	bytes, err := json.MarshalIndent(payload, "", " ")
+	file_store.mu.RUnlock()
 
 	if err != nil {
 		return fmt.Errorf("Error converting to json for saving: %w", err)
 	}
 
-	if err := os.WriteFile(file_store.filename, bytes, 0666); err != nil {
-		return fmt.Errorf("Failed to write json data to task_data file :%w", err)
+	dir := filepath.Dir(file_store.filepath)
+	tempFile, err := os.CreateTemp(dir, "tasks_temp_*.json")
+	if err != nil {
+		return fmt.Errorf("Error creating temp file: %w", err)
 	}
 
+	defer os.Remove(tempFile.Name())
+
+	if _, err := tempFile.Write(bytes); err != nil {
+		tempFile.Close()
+		return fmt.Errorf("Failed to write json data to temp file :%w", err)
+	}
+
+	tempFile.Close()
+
+	renameErr := os.Rename(tempFile.Name(), file_store.filepath)
+	if renameErr != nil {
+		return fmt.Errorf("Error creating json data file from temp file: %w", renameErr)
+	}
 	return nil
 }

@@ -9,6 +9,7 @@ import (
 
 type FileStore struct {
 	filename  string
+	filepath  string
 	latest_id int
 	store     map[int]string
 	mu        sync.RWMutex
@@ -16,6 +17,11 @@ type FileStore struct {
 
 func NewFileStore() (*FileStore, error) {
 	file_store := &FileStore{filename: "task_data.json", latest_id: 1, store: map[int]string{}}
+	dataFilePath, err := getDataFileName(file_store.filename)
+	if err != nil {
+		return nil, fmt.Errorf("Error resolving project path: %w", err)
+	}
+	file_store.filepath = dataFilePath
 
 	file_created, err := CreateFileStore(file_store)
 
