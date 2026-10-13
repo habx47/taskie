@@ -1,8 +1,8 @@
-#Taskie
+# Taskie
 A simple command-line task manager written in Go.
 
 
-##Features
+## Features
 
 * Add, list, and delete tasks.
 * Assign unique, incrementing IDs to tasks.
