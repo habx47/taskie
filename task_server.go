@@ -99,8 +99,8 @@ func (t *TaskServer) AddTask(data string) {
 		return
 	}
 
-	if errors.Is(err, LoadingFile_ReadErr) || errors.Is(err, LoadingFile_JSONErr) {
-		log.Fatalf("Operation failed. %v\n", err)
+	if errors.Is(err, FatalErr) {
+		log.Fatalf("%v\n", err)
 	}
 
 	fmt.Fprintf(t.w, "%v\n", err)
@@ -120,8 +120,8 @@ func (t *TaskServer) DeleteTask(id string) {
 		return
 	}
 
-	if errors.Is(deletion_err, LoadingFile_ReadErr) || errors.Is(deletion_err, LoadingFile_JSONErr) {
-		log.Fatalf("Operation failed. %v\n", deletion_err)
+	if errors.Is(deletion_err, FatalErr) {
+		log.Fatalf("%v\n", deletion_err)
 	}
 
 	fmt.Fprintf(t.w, "%v\n", deletion_err)

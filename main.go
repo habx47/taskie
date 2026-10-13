@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -8,8 +9,12 @@ import (
 
 func main() {
 	file_store, err := NewFileStore()
-	if err != nil {
+	if errors.Is(err, FatalErr) {
 		log.Fatalf("Could not initialize: %v", err)
+	}
+
+	if err != nil {
+		fmt.Print("Data file corrupted. Empty in-memory task list initialized\n")
 	}
 
 	taskServer := NewTaskServer(os.Stdout, file_store)

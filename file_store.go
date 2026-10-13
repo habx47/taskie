@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -19,14 +20,14 @@ func NewFileStore() (*FileStore, error) {
 	file_store := &FileStore{filename: "task_data.json", latest_id: 1, store: map[int]string{}}
 	dataFilePath, err := getDataFileName(file_store.filename)
 	if err != nil {
-		return nil, fmt.Errorf("Error resolving project path: %w", err)
+		return nil, fmt.Errorf("%w: error resolving project path: %q", FatalErr, err)
 	}
 	file_store.filepath = dataFilePath
 
 	file_created, err := CreateFileStore(file_store)
 
 	if err != nil {
-		return nil, fmt.Errorf("Error related to creating task_data file: %w", err)
+		return nil, fmt.Errorf("%w: error related to creating task data file: %q", FatalErr, err)
 	}
 
 	if file_created == true {
@@ -34,11 +35,11 @@ func NewFileStore() (*FileStore, error) {
 	}
 
 	loadErr := LoadFileStore(file_store)
-	if loadErr != nil {
-		return nil, fmt.Errorf("Error realted to loading task_data file: %w", loadErr)
+	if errors.Is(loadErr, FatalErr) {
+		return nil, fmt.Errorf("%w: error realted to loading task data file: %q", FatalErr, loadErr)
 	}
 
-	return file_store, nil
+	return file_store, loadErr
 }
 
 func (f *FileStore) add(data string) error {
@@ -51,7 +52,7 @@ func (f *FileStore) add(data string) error {
 	if err != nil {
 		loadErr := LoadFileStore(f)
 		if loadErr != nil {
-			return fmt.Errorf("Loading file again on failure to add new task failed: %w", loadErr)
+			return fmt.Errorf("%w: failed to write task to file and load it: %v", FatalErr, loadErr)
 		}
 	}
 
@@ -72,7 +73,7 @@ func (f *FileStore) delete(id int) error {
 	if err != nil {
 		loadErr := LoadFileStore(f)
 		if loadErr != nil {
-			return fmt.Errorf("Loading file again on failure to add new task failed: %w", loadErr)
+			return fmt.Errorf("%w: failed to delete the task from file and load it: %v", FatalErr, loadErr)
 		}
 	}
 

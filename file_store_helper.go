@@ -8,8 +8,7 @@ import (
 	"path/filepath"
 )
 
-var LoadingFile_ReadErr = errors.New("Couldn't read the json data file")
-var LoadingFile_JSONErr = errors.New("Couldn't unmarhsall the json file")
+var FatalErr = errors.New("Fatal error")
 
 type JSONPayload struct {
 	LatestID int            `json:"latest_id"`
@@ -37,20 +36,24 @@ func CreateFileStore(file_store *FileStore) (bool, error) {
 	if os.IsNotExist(statErr) {
 		return true, SaveToFile(file_store)
 	} else if statErr != nil {
-		return false, fmt.Errorf("Error checking file stats: %w", statErr)
+		return false, fmt.Errorf("%w: Error checking file stats: %v", FatalErr, statErr)
 	}
 	return false, nil
 }
 
 func LoadFileStore(file_store *FileStore) error {
-	bytes, err := os.ReadFile(file_store.filename)
+	bytes, err := os.ReadFile(file_store.filepath)
 	if err != nil {
-		return fmt.Errorf("Failure: %w, err: %v", LoadingFile_ReadErr, err)
+		return fmt.Errorf("%w: couldn't read the json data file: %v", FatalErr, err)
+	}
+
+	if !json.Valid(bytes) {
+		return fmt.Errorf("Data file corrupted")
 	}
 
 	var payload JSONPayload
 	if jsonErr := json.Unmarshal(bytes, &payload); jsonErr != nil {
-		return fmt.Errorf("Failure: %w, err: %v", LoadingFile_JSONErr, jsonErr)
+		return fmt.Errorf("%w: couldn't unmarshall the json data file: %v", FatalErr, jsonErr)
 	}
 
 	file_store.latest_id = payload.LatestID
