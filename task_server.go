@@ -68,6 +68,10 @@ func (t *TaskServer) CommandRouter(cmd []string) bool {
 - help`)
 
 	case "add":
+		if len(cmd) == 1 {
+			fmt.Fprint(t.w, "Need a valid task to add. Currently empty\n")
+			return true
+		}
 		task := strings.Join(cmd[1:], " ")
 		t.AddTask(task)
 
