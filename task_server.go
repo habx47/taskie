@@ -44,11 +44,13 @@ func (t *TaskServer) CaptureCommand(r io.Reader) error {
 
 		active = t.CommandRouter(commands_args)
 
-		err := scanner.Err()
-		if err != nil {
-			return fmt.Errorf("error reading the input: %v", err)
-		}
 	}
+
+	err := scanner.Err()
+	if err != nil {
+		return fmt.Errorf("error reading the input: %v", err)
+	}
+
 	return nil
 }
 

@@ -2,8 +2,11 @@ package main
 
 import (
 	"bytes"
+	"errors"
+	"io"
 	"strings"
 	"testing"
+	"testing/iotest"
 )
 
 func assertString(t testing.TB, got, want string) {
@@ -58,6 +61,18 @@ func TestTaskServer(t *testing.T) {
 			assertString(t, got, want)
 		})
 	}
+
+	t.Run("failure to read", func(t *testing.T) {
+		stubTaskStore := NewInMemoryTaskStore(map[int]string{})
+		r := iotest.ErrReader(errors.New("this will always error"))
+		testTaskServer := NewTaskServer(io.Discard, stubTaskStore)
+
+		err := testTaskServer.CaptureCommand(r)
+
+		if err == nil {
+			t.Fatal("expected an err but got nil")
+		}
+	})
 }
 
 func TestListTasks(t *testing.T) {
