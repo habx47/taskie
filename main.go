@@ -15,5 +15,8 @@ func main() {
 
 	taskServer := NewTaskServer(os.Stdout, file_store)
 	fmt.Println("Welcome to Taskie")
-	taskServer.CaptureCommand(os.Stdin)
+	readErr := taskServer.CaptureCommand(os.Stdin)
+	if readErr != nil {
+		log.Fatalf("%v", readErr)
+	}
 }

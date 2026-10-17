@@ -81,10 +81,8 @@ func TestAddTask(t *testing.T) {
 	taskServer := NewTaskServer(&buffer, stubTaskStore)
 	taskServer.AddTask("testing add tasks")
 
-	taskServer.ListTasks()
-
 	got := (&buffer).String()
-	want := "1. testing add tasks\n"
+	want := "Task added: \"testing add tasks\"\n"
 
 	assertString(t, got, want)
 }

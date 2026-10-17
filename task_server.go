@@ -28,7 +28,7 @@ func NewTaskServer(w io.Writer, store TaskStore) *TaskServer {
 	return t
 }
 
-func (t *TaskServer) CaptureCommand(r io.Reader) {
+func (t *TaskServer) CaptureCommand(r io.Reader) error {
 	scanner := bufio.NewScanner(r)
 	active := true
 
@@ -43,7 +43,13 @@ func (t *TaskServer) CaptureCommand(r io.Reader) {
 		commands_args := strings.Fields(line)
 
 		active = t.CommandRouter(commands_args)
+
+		err := scanner.Err()
+		if err != nil {
+			return fmt.Errorf("error reading the input: %v", err)
+		}
 	}
+	return nil
 }
 
 func (t *TaskServer) CommandRouter(cmd []string) bool {
